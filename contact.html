@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Contact | DropVu</title>
+    <link rel="icon" href="https://i.imgur.com/991sWex.png" type="image/png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;600&family=Playfair+Display:wght@700&display=swap');
+        body { background: #000; font-family: 'Inter', sans-serif; color: white; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        #video-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1; opacity: 0.5; }
+        button, input, textarea { border-radius: 0 !important; }
+        .title-font { font-family: 'Playfair Display', serif; }
+        
+        /* Animation pour le message de confirmation */
+        .success-message { animation: fadeInOut 3s ease forwards; }
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(10px); }
+            15% { opacity: 1; transform: translateY(0); }
+            85% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body class="p-6">
+    <video autoplay muted loop id="video-bg"><source src="video.mp4" type="video/mp4"></video>
+
+    <div class="w-full max-w-2xl bg-black/40 backdrop-blur-xl p-10 border border-white/10 relative z-10">
+        <div class="flex justify-between items-center mb-12">
+            <a href="index.html" class="title-font text-3xl">DROPVU</a>
+            <a href="index.html" class="text-[10px] uppercase tracking-widest border-b border-white/30 pb-1">Retour Accueil</a>
+        </div>
+
+        <h2 class="text-xs uppercase font-bold tracking-widest text-blue-300 mb-8">Service Client</h2>
+
+        <!-- Message de confirmation (caché par défaut) -->
+        <div id="form-message" class="mb-6 text-center text-sm hidden"></div>
+
+        <form id="contactForm" class="space-y-6">
+            <input type="email" id="email" placeholder="Votre Email" required class="w-full p-4 border border-white/10 bg-white/5 text-white outline-none focus:border-white transition">
+            <input type="text" id="subject" placeholder="Objet" required class="w-full p-4 border border-white/10 bg-white/5 text-white outline-none focus:border-white transition">
+            <textarea id="message" placeholder="Votre Message" rows="5" required class="w-full p-4 border border-white/10 bg-white/5 text-white outline-none focus:border-white transition"></textarea>
+            
+            <button type="submit" id="submit-btn" class="w-full py-5 bg-white text-black text-xs font-bold uppercase tracking-widest hover:bg-blue-50 transition">Envoyer la demande</button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('contactForm').onsubmit = async function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const subject = document.getElementById('subject').value;
+            const message = document.getElementById('message').value;
+            const submitBtn = document.getElementById('submit-btn');
+            const formMessage = document.getElementById('form-message');
+            
+            // Désactiver le bouton pendant l'envoi
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Envoi en cours...';
+            submitBtn.classList.add('opacity-50');
+
+            try {
+                // Préparer le message pour Discord avec un format plus propre
+                const discordMessage = {
+                    content: `📬 **Nouveau message de contact**`,
+                    embeds: [{
+                        title: "📧 Détails du message",
+                        color: 3447003, // Bleu
+                        fields: [
+                            { name: "📨 Email", value: email, inline: true },
+                            { name: "📌 Objet", value: subject, inline: true },
+                            { name: "📝 Message", value: message.length > 1024 ? message.substring(0, 1021) + "..." : message },
+                            { name: "🕐 Date", value: new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' }), inline: true }
+                        ],
+                        footer: { text: "DropVu - Service Client" },
+                        timestamp: new Date().toISOString()
+                    }]
+                };
+
+                // Nouveau webhook fourni
+                const response = await fetch('https://discord.com/api/webhooks/1472588862403510487/r7MhhoeJLcrIihU3GJL_00t8YnHHIsF8y3TIGWVYZbXeMVLL8axXOq4T202LikJU6yfq', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(discordMessage)
+                });
+
+                if (response.ok) {
+                    // Message de succès élégant
+                    formMessage.textContent = ' Message envoyé avec succès ! Vous allez être redirigé.';
+                    formMessage.className = 'mb-6 text-center text-sm text-green-400 success-message';
+                    formMessage.classList.remove('hidden');
+                    
+                    // Vider le formulaire
+                    document.getElementById('email').value = '';
+                    document.getElementById('subject').value = '';
+                    document.getElementById('message').value = '';
+                    
+                    // Redirection après 2 secondes
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 2000);
+                } else {
+                    throw new Error('Erreur lors de l\'envoi');
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                formMessage.textContent = ' Une erreur est survenue. Veuillez réessayer.';
+                formMessage.className = 'mb-6 text-center text-sm text-red-400';
+                formMessage.classList.remove('hidden');
+                
+                // Réactiver le bouton
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Envoyer la demande';
+                submitBtn.classList.remove('opacity-50');
+            }
+        };
+    </script>
+</body>
+</html>

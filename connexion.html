@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Connexion | DropVu</title>
+    <link rel="icon" href="https://i.imgur.com/KJEJEiJ.png" type="image/png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;600&family=Playfair+Display:wght@700&display=swap');
+        body { background: #000; font-family: 'Inter', sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; color: white; margin: 0; }
+        #video-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1; opacity: 0.5; }
+        button, input { border-radius: 0 !important; }
+        .title-font { font-family: 'Playfair Display', serif; }
+    </style>
+</head>
+<body class="p-6">
+    <video autoplay muted loop id="video-bg"><source src="video.mp4" type="video/mp4"></video>
+
+    <div class="w-full max-w-md">
+        <div class="text-center mb-12">
+            <a href="index.html" class="title-font text-5xl text-white tracking-tighter hover:opacity-70 transition">DROPVU</a>
+            <p class="text-[10px] uppercase tracking-[0.3em] text-blue-300 mt-2">Cliquez sur le logo pour entrer sans connexion</p>
+        </div>
+
+        <div class="bg-white/10 backdrop-blur-xl p-10 border border-white/20 shadow-2xl">
+            <div class="flex border-b border-white/10 mb-8">
+                <button id="tab-login" class="flex-1 py-4 text-[10px] font-bold uppercase tracking-widest border-b-2 border-white">Connexion</button>
+                <button id="tab-signup" class="flex-1 py-4 text-[10px] font-bold uppercase tracking-widest text-gray-400 border-b-2 border-transparent">Créer un compte</button>
+            </div>
+
+            <form class="space-y-6" onsubmit="event.preventDefault(); window.location.href='index.html';">
+                <div id="signup-fields" class="hidden space-y-6">
+                    <input type="text" placeholder="Nom complet" class="w-full p-4 border border-white/10 bg-black/20 text-white outline-none">
+                </div>
+                <input type="email" placeholder="Email" required class="w-full p-4 border border-white/10 bg-black/20 text-white outline-none">
+                <input type="password" placeholder="Mot de passe" required class="w-full p-4 border border-white/10 bg-black/20 text-white outline-none">
+                <button type="submit" class="w-full py-5 bg-white text-black text-xs font-bold uppercase tracking-widest hover:bg-blue-50 transition">Valider</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const tabLogin = document.getElementById('tab-login'), tabSignup = document.getElementById('tab-signup'), signupFields = document.getElementById('signup-fields');
+        tabLogin.onclick = () => { tabLogin.classList.add('border-white'); tabSignup.classList.remove('border-white'); tabSignup.classList.add('text-gray-400'); signupFields.classList.add('hidden'); };
+        tabSignup.onclick = () => { tabSignup.classList.add('border-white'); tabSignup.classList.remove('text-gray-400'); tabLogin.classList.remove('border-white'); tabLogin.classList.add('text-gray-400'); signupFields.classList.remove('hidden'); };
+    </script>
+</body>
+</html>

@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>𝐃𝐫𝐨𝐩𝐕𝐮 | L'Art de l'Horizon</title>
+    <link rel="icon" href="https://i.imgur.com/991sWex.png" type="image/png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:wght@700&display=swap');
+        body { background-color: #000; font-family: 'Inter', sans-serif; color: white; margin: 0; overflow-x: hidden; }
+        .title-font { font-family: 'Playfair Display', serif; }
+        button, input { border-radius: 0 !important; }
+        
+        #video-bg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            object-fit: cover; z-index: -1; opacity: 0.4;
+        }
+
+        /* Overlay des nuages personnalisé */
+        #intro-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            pointer-events: none;
+            display: flex;
+        }
+        
+        .intro-cloud {
+            width: 50%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            transition: transform 2s cubic-bezier(0.85, 0, 0.15, 1);
+        }
+        
+        .cloud-left {
+            background-image: url('nuagee.png');
+            transform: translateX(0);
+        }
+        
+        .cloud-right {
+            background-image: url('nuage.png');
+            transform: translateX(0);
+        }
+        
+        /* Animation des nuages qui glissent */
+        .loaded .cloud-left {
+            transform: translateX(-100%);
+        }
+        
+        .loaded .cloud-right {
+            transform: translateX(100%);
+        }
+
+        #cart-drawer { 
+    background: rgba(0, 68, 204, 0.4); /* Plus transparent (0.4 au lieu de 0.95) */
+    backdrop-filter: blur(12px); /* Correction de backdrop-blur: lg; en syntaxe standard */
+    -webkit-backdrop-filter: blur(12px); /* Support Safari */
+    color: white; 
+    transform: translateX(100%); 
+    transition: transform 0.4s ease; 
+    border-left: 1px solid rgba(255, 255, 255, 0.1); /* Optionnel : bordure subtile */
+}
+        #cart-drawer.open { transform: translateX(0); }
+
+        .social-icon { transition: all 0.3s ease; }
+        .social-icon:hover { transform: translateY(-3px); filter: brightness(1.2); }
+
+        /* Message de confirmation newsletter */
+        .newsletter-success { animation: fadeInOut 3s ease forwards; }
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(10px); }
+            15% { opacity: 1; transform: translateY(0); }
+            85% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body>
+    <video autoplay muted loop id="video-bg"><source src="video.mp4" type="video/mp4"></video>
+
+    <!-- Overlay des nuages -->
+    <div id="intro-overlay">
+        <div class="intro-cloud cloud-left"></div>
+        <div class="intro-cloud cloud-right"></div>
+    </div>
+
+    <nav class="fixed top-0 w-full z-50 p-6 flex justify-between items-center px-12 text-white">
+        <div class="text-2xl font-bold title-font tracking-tighter">DROPVU</div>
+        <div class="flex items-center space-x-8 text-xs font-semibold uppercase tracking-widest">
+            <a href="connexion.html" class="hover:text-blue-300 transition">Connexion</a>
+            <button onclick="toggleCart()" class="relative border border-white/30 p-2 hover:bg-white hover:text-blue-900 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                <span id="cart-count" class="absolute -top-2 -right-2 bg-white text-blue-900 text-[10px] w-5 h-5 flex items-center justify-center font-bold">0</span>
+            </button>
+        </div>
+    </nav>
+
+    <section class="h-screen flex flex-col justify-center items-center text-center relative z-10">
+        <h1 class="text-8xl md:text-[10rem] title-font text-white mb-6">DropVu</h1>
+        <p class="text-xs uppercase tracking-[0.5em] text-blue-200">L'excellence esthétique au service de l'horizon</p>
+    </section>
+
+    <main class="relative z-20 max-w-7xl mx-auto px-6 pb-24">
+        <div class="backdrop-blur-md bg-white/10 border border-white/20 p-12 mb-20 text-center">
+            <p class="text-xs uppercase tracking-[0.4em] text-blue-200 mb-4">Offre de lancement exclusive</p>
+            <div id="countdown" class="text-4xl text-white font-light tracking-[0.3em] uppercase">00J 00H 00M 00S</div>
+        </div>
+        <div id="shop-grid" class="grid grid-cols-1 md:grid-cols-3 gap-12"></div>
+    </main>
+
+    <!-- Footer Amélioré avec webhook Discord -->
+    <footer class="relative z-20 border-t border-white/10 bg-gradient-to-b from-transparent to-black/80 pt-20">
+        <!-- Newsletter avec webhook Discord -->
+        <div class="max-w-4xl mx-auto px-6 mb-20">
+            <div class="backdrop-blur-md bg-white/5 border border-white/10 p-12 text-center">
+                <h3 class="title-font text-3xl mb-4">Restez informé</h3>
+                <p class="text-sm opacity-70 mb-8">Recevez nos actualités et offres exclusives</p>
+                
+                <!-- Message de confirmation (caché par défaut) -->
+                <div id="newsletter-message" class="mb-4 text-blue-300 text-sm hidden"></div>
+                
+                <form id="newsletter-form" class="flex flex-col md:flex-row gap-4 max-w-xl mx-auto">
+                    <input type="email" id="newsletter-email" placeholder="Votre adresse email" required class="flex-grow px-6 py-4 bg-black/50 border border-white/20 text-white text-sm outline-none focus:border-blue-400 transition">
+                    <button type="submit" id="newsletter-submit" class="px-8 py-4 bg-white text-black text-xs font-bold uppercase tracking-widest hover:bg-blue-100 transition">S'inscrire</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Liens principaux -->
+        <div class="max-w-7xl mx-auto px-12 pb-16">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-12 text-center md:text-left">
+                
+                <!-- Colonne 1 : À propos -->
+                <div>
+                    <h4 class="title-font text-xl text-white mb-6">DropVu</h4>
+                    <p class="text-xs opacity-60 leading-relaxed mb-4">
+                        L'art de capturer l'horizon à travers des accessoires minimalistes d'exception.
+                    </p>
+                    <div class="flex justify-center md:justify-start space-x-4">
+                        <span class="text-[10px] uppercase tracking-widest text-blue-200">Qualité</span>
+                        <span class="text-[10px] uppercase tracking-widest text-blue-200">Design</span>
+                        <span class="text-[10px] uppercase tracking-widest text-blue-200">Éthique</span>
+                    </div>
+                </div>
+
+                <!-- Colonne 2 : Support -->
+                <div>
+                    <h4 class="title-font text-xl text-white mb-6">Support</h4>
+                    <ul class="text-xs space-y-4">
+                        <li><a href="contact.html" class="opacity-60 hover:opacity-100 hover:text-blue-300 transition flex items-center justify-center md:justify-start gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8 10a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                            Contact
+                        </a></li>
+                        <li><a href="#" class="opacity-60 hover:opacity-100 hover:text-blue-300 transition flex items-center justify-center md:justify-start gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                            Livraison
+                        </a></li>
+                        <li><a href="#" class="opacity-60 hover:opacity-100 hover:text-blue-300 transition flex items-center justify-center md:justify-start gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            Retours
+                        </a></li>
+                        <li><a href="#" class="opacity-60 hover:opacity-100 hover:text-blue-300 transition flex items-center justify-center md:justify-start gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                            FAQ
+                        </a></li>
+                    </ul>
+                </div>
+
+                <!-- Colonne 3 : Social (UNIQUEMENT TikTok) -->
+                <div>
+                    <h4 class="title-font text-xl text-white mb-6">Réseaux</h4>
+                    <div class="flex justify-center md:justify-start gap-6">
+                        <a href="#" class="social-icon opacity-60 hover:opacity-100 hover:text-blue-300 transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.6 9 4.6 0-2 .5-3.5 2-5 2-2 5-2 7-1 1 1 2 2 2 3z"/>
+                            </svg>
+                        </a>
+                        <span class="text-xs opacity-50 self-center">@dropvu_officiel</span>
+                    </div>
+                </div>
+
+                <!-- Colonne 4 : Paiements -->
+                <div>
+                    <h4 class="title-font text-xl text-white mb-6">Paiements</h4>
+                    <div class="flex flex-wrap justify-center md:justify-start gap-3">
+                        <span class="px-3 py-2 bg-white/10 text-[10px] uppercase tracking-wider border border-white/20">Visa</span>
+                        <span class="px-3 py-2 bg-white/10 text-[10px] uppercase tracking-wider border border-white/20">Mastercard</span>
+                        <span class="px-3 py-2 bg-white/10 text-[10px] uppercase tracking-wider border border-white/20">PayPal</span>
+                        <span class="px-3 py-2 bg-white/10 text-[10px] uppercase tracking-wider border border-white/20">Apple Pay</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Copyright amélioré -->
+        <div class="border-t border-white/10 bg-black/30">
+            <div class="max-w-7xl mx-auto px-12 py-8 flex flex-col md:flex-row justify-between items-center text-[10px] text-white/40 uppercase tracking-[0.2em]">
+                <div class="flex gap-6 mb-4 md:mb-0">
+                    <a href="#" class="hover:text-white transition">Mentions légales</a>
+                    <a href="#" class="hover:text-white transition">CGV</a>
+                    <a href="#" class="hover:text-white transition">Politique de confidentialité</a>
+                </div>
+                <div>
+                    2026 © DropVu — Tous droits réservés. <span class="text-blue-300/60">Powered by Shopify</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Panier Partagé -->
+    <div id="cart-drawer" class="fixed top-0 right-0 h-full w-full md:w-[450px] z-[100] p-10 flex flex-col shadow-2xl">
+        <div class="flex justify-between items-center mb-12">
+            <h2 class="title-font text-3xl">Panier</h2>
+            <div class="flex gap-4 items-center">
+                <button onclick="clearCart()" class="text-[10px] uppercase tracking-widest text-red-200 hover:text-white transition">Vider</button>
+                <button onclick="toggleCart()" class="text-[10px] uppercase tracking-widest border-b border-white/30 pb-1">Fermer</button>
+            </div>
+        </div>
+        <div id="cart-items" class="flex-grow overflow-y-auto space-y-8 pr-4"></div>
+        <div class="mt-8 pt-8 border-t border-white/10">
+            <div class="flex justify-between text-2xl font-light mb-8">
+                <span class="uppercase tracking-widest text-xs self-center">Total</span>
+                <span id="cart-total">0€</span>
+            </div>
+            <button onclick="window.location.href='paiement.html'" class="w-full py-5 bg-white text-blue-900 text-xs font-bold uppercase tracking-[0.2em] hover:bg-blue-50 transition">Procéder au paiement</button>
+        </div>
+    </div>
+
+    <script>
+        // Liens images modifiables ici
+        const products = [
+            { id: 1, name: "Article 1", price: 20, img: "https://i.imgur.com/YXNl1QC.png" },
+            { id: 2, name: "Article 2", price: 20, img: "https://i.imgur.com/YXNl1QC.png" },
+            { id: 3, name: "Article 3", price: 20, img: "https://i.imgur.com/YXNl1QC.png" },
+            { id: 4, name: "Article 4", price: 20, img: "https://i.imgur.com/YXNl1QC.png" },
+            { id: 5, name: "Article 5", price: 20, img: "https://i.imgur.com/YXNl1QC.png" },
+            { id: 6, name: "Article 6", price: 20, img: "https://i.imgur.com/YXNl1QC.png" },
+            { id: 7, name: "Article 7", price: 20, img: "https://i.imgur.com/YXNl1QC.png" },
+            { id: 8, name: "Article 8", price: 20, img: "https://i.imgur.com/YXNl1QC.png" },
+            { id: 9, name: "Article 9", price: 20, img: "https://i.imgur.com/YXNl1QC.png" }
+        ];
+
+        let cart = JSON.parse(localStorage.getItem('dropvu_cart')) || [];
+        
+        window.onload = () => { 
+            // Déclencher l'animation des nuages après un court délai
+            setTimeout(() => document.body.classList.add('loaded'), 100);
+            renderShop(); 
+            updateCart(); 
+        };
+
+        function renderShop() {
+            const grid = document.getElementById('shop-grid');
+            products.forEach(p => {
+                grid.innerHTML += `
+                    <div class="flex flex-col group bg-white/5 p-4 border border-white/10">
+                        <a href="article${p.id}.html" class="aspect-[4/5] overflow-hidden mb-6">
+                            <img src="${p.img}" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition duration-700">
+                        </a>
+                        <a href="article${p.id}.html" class="title-font text-2xl text-white mb-1">${p.name}</a>
+                        <p class="text-sm font-bold text-blue-300 mb-6">${p.price}€</p>
+                        <a href="article${p.id}.html" class="text-center py-4 border border-white/20 text-white text-[10px] uppercase font-bold tracking-widest hover:bg-white hover:text-blue-900 transition">Voir l'article</a>
+                    </div>`;
+            });
+        }
+
+        function toggleCart() { document.getElementById('cart-drawer').classList.toggle('open'); }
+        
+        function clearCart() {
+            cart = [];
+            updateCart();
+        }
+
+        function updateCart() {
+            localStorage.setItem('dropvu_cart', JSON.stringify(cart));
+            const container = document.getElementById('cart-items');
+            container.innerHTML = '';
+            let total = 0; let count = 0;
+            cart.forEach((item, i) => {
+                total += item.price * item.qty; count += item.qty;
+                container.innerHTML += `<div class="flex gap-6 items-center"><img src="${item.img}" class="w-20 h-24 object-cover"><div class="flex-grow"><h4 class="text-sm font-bold uppercase tracking-widest">${item.name}</h4><div class="flex items-center gap-4 mt-2"><button onclick="changeQty(${i},-1)">-</button><span>${item.qty}</span><button onclick="changeQty(${i},1)">+</button></div></div><span>${item.price*item.qty}€</span></div>`;
+            });
+            document.getElementById('cart-total').innerText = total + '€';
+            document.getElementById('cart-count').innerText = count;
+        }
+
+        function changeQty(i, d) { cart[i].qty += d; if(cart[i].qty <= 0) cart.splice(i, 1); updateCart(); }
+
+        const target = new Date().getTime() + (3 * 86400000);
+        setInterval(() => {
+            const diff = target - new Date().getTime();
+            const d = Math.floor(diff / 86400000), h = Math.floor((diff % 86400000) / 3600000), m = Math.floor((diff % 3600000) / 60000), s = Math.floor((diff % 60000) / 1000);
+            document.getElementById("countdown").innerText = `${d}J ${h}H ${m}M ${s}S`;
+        }, 1000);
+
+        // ===== GESTION DU FORMULAIRE NEWSLETTER AVEC WEBHOOK DISCORD =====
+        const newsletterForm = document.getElementById('newsletter-form');
+        const newsletterEmail = document.getElementById('newsletter-email');
+        const newsletterMessage = document.getElementById('newsletter-message');
+        const submitButton = document.getElementById('newsletter-submit');
+        
+        const WEBHOOK_URL = 'https://discord.com/api/webhooks/1472582118440829081/ybIYXguA1lIEf4SI2At6xBBPblwiCcUzGUPjKkgqlYWW2uEYJ3lPIdiMzmrqQ3m-2HNe';
+
+        newsletterForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = newsletterEmail.value.trim();
+            if (!email) return;
+
+            // Désactiver le bouton pendant l'envoi
+            submitButton.disabled = true;
+            submitButton.textContent = 'Envoi...';
+
+            try {
+                // Préparer le message pour Discord
+                const discordMessage = {
+                    content: `📧 **Nouvelle inscription newsletter**\nEmail : ${email}\nDate : ${new Date().toLocaleString('fr-FR')}\nSite : DropVu`
+                };
+
+                // Envoyer au webhook Discord
+                const response = await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(discordMessage)
+                });
+
+                if (response.ok) {
+                    // Afficher message de succès
+                    newsletterMessage.textContent = '✅ Merci ! Votre inscription a bien été prise en compte.';
+                    newsletterMessage.className = 'mb-4 text-green-400 text-sm newsletter-success';
+                    newsletterMessage.classList.remove('hidden');
+                    newsletterEmail.value = ''; // Vider le champ
+                    
+                    // Cacher le message après 3 secondes
+                    setTimeout(() => {
+                        newsletterMessage.classList.add('hidden');
+                    }, 3000);
+                } else {
+                    throw new Error('Erreur lors de l\'envoi');
+                }
+            } catch (error) {
+                newsletterMessage.textContent = '❌ Une erreur est survenue. Veuillez réessayer.';
+                newsletterMessage.className = 'mb-4 text-red-400 text-sm';
+                newsletterMessage.classList.remove('hidden');
+            } finally {
+                // Réactiver le bouton
+                submitButton.disabled = false;
+                submitButton.textContent = "S'inscrire";
+            }
+        });
+    </script>
+</body>
+</html>

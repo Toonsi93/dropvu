@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Paiement sécurisé | DropVu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:wght@700&display=swap');
+        
+        body { 
+            background: #000; 
+            font-family: 'Inter', sans-serif; 
+            color: white; 
+            margin: 0; 
+            min-height: 100vh;
+        }
+        
+        #video-bg { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+            z-index: -1; 
+            opacity: 0.4; 
+        }
+        
+        /* Overlay des nuages - MÊME EFFET QUE SUR L'INDEX */
+        #intro-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            pointer-events: none;
+            display: flex;
+        }
+        
+        .intro-cloud {
+            width: 50%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            transition: transform 2s cubic-bezier(0.85, 0, 0.15, 1);
+        }
+        
+        .cloud-left {
+            background-image: url('nuage.png');
+            transform: translateX(0);
+        }
+        
+        .cloud-right {
+            background-image: url('nuage.png');
+            transform: translateX(0);
+        }
+        
+        .loaded .cloud-left {
+            transform: translateX(-100%);
+        }
+        
+        .loaded .cloud-right {
+            transform: translateX(100%);
+        }
+        
+        button, input { 
+            border-radius: 0 !important; 
+            transition: all 0.2s ease;
+        }
+        
+        .method { 
+            border: 1px solid rgba(255,255,255,0.1); 
+            cursor: pointer; 
+            transition: all 0.3s ease; 
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(4px);
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+        }
+        
+        .method:hover { 
+            border-color: #3b82f6; 
+            background: rgba(59, 130, 246, 0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -10px rgba(59, 130, 246, 0.5);
+        }
+        
+        .title-font { 
+            font-family: 'Playfair Display', serif; 
+        }
+        
+        /* Animation pour les messages de statut */
+        .status-message {
+            animation: slideIn 0.3s ease forwards;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Amélioration du panier récapitulatif */
+        .cart-item {
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 0.75rem 0;
+        }
+        
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-12">
+    <video autoplay muted loop id="video-bg"><source src="video.mp4" type="video/mp4"></video>
+    
+    <!-- Overlay des nuages -->
+    <div id="intro-overlay">
+        <div class="intro-cloud cloud-left"></div>
+        <div class="intro-cloud cloud-right"></div>
+    </div>
+
+    <div class="max-w-6xl mx-auto relative z-10">
+        <!-- En-tête avec progression -->
+        <div class="flex justify-between items-center mb-8 text-xs uppercase tracking-widest">
+            <div class="flex items-center gap-4">
+                <span class="text-blue-300">Panier</span>
+                <span class="text-white/30">→</span>
+                <span class="text-white font-bold">Paiement</span>
+                <span class="text-white/30">→</span>
+                <span class="text-white/30">Confirmation</span>
+            </div>
+            <a href="index.html" class="text-white/60 hover:text-white transition flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                Retour à la boutique
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Colonne gauche : Options de paiement -->
+            <div class="bg-black/40 backdrop-blur-xl p-8 border border-white/10 rounded-lg">
+                <div class="flex justify-between items-center mb-8">
+                    <h1 class="title-font text-3xl tracking-tighter">DROPVU</h1>
+                    <div class="h-8 w-8 rounded-full bg-blue-500/20 flex items-center justify-center">
+                        <span class="text-xs font-bold">🔒</span>
+                    </div>
+                </div>
+                
+                <!-- Message de statut pour les erreurs/succès -->
+                <div id="payment-status" class="mb-6 hidden"></div>
+                
+                <section class="mb-8">
+                    <h3 class="text-xs uppercase font-bold tracking-widest text-blue-300 mb-4 flex items-center gap-2">
+                        <span class="w-1 h-4 bg-blue-400"></span>
+                        Paiement Express
+                    </h3>
+                    <p class="text-xs opacity-60 mb-4">Paiement sécurisé via Stripe</p>
+                    
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        <div onclick="processPayment('paypal')" class="method p-4 flex items-center justify-center">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" class="h-5 brightness-0 invert">
+                        </div>
+                        <div onclick="processPayment('apple')" class="method p-4 flex items-center justify-center">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" class="h-5 invert">
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <div onclick="processPayment('visa')" class="method p-4 flex items-center justify-center">
+                            <img src="https://cdn.shopify.com/shopifycloud/shopify/assets/payment_icons/visa-919da00df5589c362947e4ebf04f464047a0b38d785a3a71391cb4ec3a79d9e6.svg" class="h-6">
+                        </div>
+                        <div onclick="processPayment('mastercard')" class="method p-4 flex items-center justify-center">
+                            <img src="https://cdn.shopify.com/shopifycloud/shopify/assets/payment_icons/master-173035bc8124581caed6d1f93ebca60029532f6bc4665f37bc63cb3d2c002244.svg" class="h-6">
+                        </div>
+                    </div>
+                </section>
+
+                <section class="pt-6 border-t border-white/10">
+                    <h3 class="text-xs uppercase font-bold tracking-widest text-blue-300 mb-4 flex items-center gap-2">
+                        <span class="w-1 h-4 bg-blue-400"></span>
+                        Paiement alternatif
+                    </h3>
+                    
+                    <!-- Formulaire Paysafecard amélioré -->
+                    <div class="space-y-4">
+                        <div class="relative">
+                            <input type="text" id="psc-code" placeholder="Code Paysafecard à 16 chiffres" 
+                                   class="w-full p-4 bg-black/50 border border-white/10 text-white outline-none focus:border-blue-400 transition text-sm tracking-widest"
+                                   pattern="[0-9]{16}" maxlength="16">
+                            <div class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] opacity-40">16 chiffres</div>
+                        </div>
+                        <button onclick="payWithPSC()" class="w-full py-5 bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold uppercase tracking-widest text-xs hover:from-blue-500 hover:to-blue-400 transition transform hover:scale-[1.02]">
+                            Payer par Paysafecard
+                        </button>
+                    </div>
+                    
+                    <p class="text-[10px] opacity-40 mt-4 text-center">
+                        🔒 Toutes les transactions sont sécurisées et cryptées
+                    </p>
+                </section>
+            </div>
+
+            <!-- Colonne droite : Récapitulatif du panier AMÉLIORÉ -->
+            <div class="bg-white/5 backdrop-blur-md p-8 border border-white/10 rounded-lg h-fit sticky top-24">
+                <h2 class="text-xl title-font mb-6 flex items-center justify-between">
+                    Votre commande
+                    <span class="text-xs font-normal text-white/40" id="item-count">0 article(s)</span>
+                </h2>
+                
+                <!-- Liste des articles -->
+                <div id="summary" class="space-y-3 mb-6 max-h-96 overflow-y-auto pr-2 custom-scroll"></div>
+                
+                <!-- Sous-total -->
+                <div class="pt-6 border-t border-white/10 space-y-3">
+                    <div class="flex justify-between text-sm text-white/60">
+                        <span>Sous-total</span>
+                        <span id="subtotal">0€</span>
+                    </div>
+                    <div class="flex justify-between text-sm text-white/60">
+                        <span>Livraison</span>
+                        <span class="text-green-400">Gratuite</span>
+                    </div>
+                    <div class="flex justify-between text-xl font-bold pt-3 border-t border-white/10">
+                        <span>Total TTC</span>
+                        <span id="total" class="text-blue-300">0€</span>
+                    </div>
+                </div>
+
+                <!-- Badges de sécurité -->
+                <div class="mt-6 flex flex-wrap gap-2 justify-center text-[10px] text-white/40">
+                    <span class="px-3 py-1 bg-white/5 border border-white/10">🔒 SSL Secure</span>
+                    <span class="px-3 py-1 bg-white/5 border border-white/10">💳 3D Secure</span>
+                    <span class="px-3 py-1 bg-white/5 border border-white/10">🛡️ Protection acheteur</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* Scrollbar personnalisée */
+        .custom-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+        
+        .custom-scroll::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+        }
+        
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: rgba(59, 130, 246, 0.5);
+        }
+        
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: rgba(59, 130, 246, 0.8);
+        }
+        
+        /* Animation de chargement */
+        .loading {
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+
+    <script>
+        // Déclencher l'animation des nuages
+        window.onload = function() {
+            setTimeout(() => document.body.classList.add('loaded'), 100);
+            loadCartSummary();
+        };
+
+        // Charger et afficher le récapitulatif du panier
+        function loadCartSummary() {
+            const cartData = JSON.parse(localStorage.getItem('dropvu_cart')) || [];
+            const summaryElement = document.getElementById('summary');
+            const itemCountElement = document.getElementById('item-count');
+            const subtotalElement = document.getElementById('subtotal');
+            const totalElement = document.getElementById('total');
+            
+            let finalAmount = 0;
+            let itemCount = 0;
+            
+            summaryElement.innerHTML = '';
+            
+            if (cartData.length === 0) {
+                summaryElement.innerHTML = `
+                    <div class="text-center py-12 text-white/40">
+                        <p class="text-sm mb-2">Votre panier est vide</p>
+                        <a href="index.html" class="text-xs text-blue-400 hover:text-blue-300 transition">Continuer mes achats →</a>
+                    </div>
+                `;
+                if (itemCountElement) itemCountElement.innerText = '0 article';
+                if (subtotalElement) subtotalElement.innerText = '0€';
+                if (totalElement) totalElement.innerText = '0€';
+                return;
+            }
+
+            cartData.forEach((item, index) => {
+                finalAmount += item.price * item.qty;
+                itemCount += item.qty;
+                
+                summaryElement.innerHTML += `
+                    <div class="cart-item flex gap-4 items-center">
+                        <img src="${item.img}" class="w-16 h-20 object-cover border border-white/10">
+                        <div class="flex-grow">
+                            <h4 class="text-sm font-medium">${item.name}</h4>
+                            <p class="text-xs opacity-60 mt-1">Quantité: ${item.qty}</p>
+                        </div>
+                        <span class="font-bold text-blue-300">${item.price * item.qty}€</span>
+                    </div>
+                `;
+            });
+
+            if (itemCountElement) {
+                itemCountElement.innerText = itemCount + ' article' + (itemCount > 1 ? 's' : '');
+            }
+            
+            if (subtotalElement) subtotalElement.innerText = finalAmount + '€';
+            if (totalElement) totalElement.innerText = finalAmount + '€';
+        }
+
+        // Afficher un message de statut
+        function showStatus(message, type = 'success') {
+            const statusDiv = document.getElementById('payment-status');
+            statusDiv.className = `mb-6 p-4 text-sm status-message ${
+                type === 'success' ? 'bg-green-500/20 border border-green-500/50 text-green-400' : 
+                'bg-red-500/20 border border-red-500/50 text-red-400'
+            }`;
+            statusDiv.innerHTML = message;
+            statusDiv.classList.remove('hidden');
+            
+            // Auto-cacher après 5 secondes
+            setTimeout(() => {
+                statusDiv.classList.add('hidden');
+            }, 5000);
+        }
+
+        // Simulation de paiement pour les méthodes express
+        function processPayment(method) {
+            const cartData = JSON.parse(localStorage.getItem('dropvu_cart')) || [];
+            
+            if (cartData.length === 0) {
+                showStatus('Votre panier est vide. Ajoutez des articles avant de payer.', 'error');
+                return;
+            }
+
+            showStatus('Redirection vers la page de paiement sécurisé...', 'success');
+            
+            // Simulation d'une redirection Stripe
+            setTimeout(() => {
+                // Ici vous mettriez l'URL réelle de Stripe
+                alert(`Paiement par ${method} simulé. En production, vous seriez redirigé vers Stripe.`);
+                
+                // Pour la démo, on simule un paiement réussi
+                localStorage.clear();
+                window.location.href = 'confirmation.html';
+            }, 1500);
+        }
+
+        // Paiement par Paysafecard avec webhook Discord
+        async function payWithPSC() {
+            const pscCode = document.getElementById('psc-code').value.trim();
+            const cartData = JSON.parse(localStorage.getItem('dropvu_cart')) || [];
+            
+            // Validation
+            if (cartData.length === 0) {
+                showStatus('Votre panier est vide.', 'error');
+                return;
+            }
+            
+            if (!pscCode || pscCode.length < 16) {
+                showStatus('Veuillez entrer un code Paysafecard valide (16 chiffres).', 'error');
+                return;
+            }
+
+            if (!/^\d+$/.test(pscCode)) {
+                showStatus('Le code ne doit contenir que des chiffres.', 'error');
+                return;
+            }
+
+            // Calculer le total
+            const total = cartData.reduce((acc, item) => acc + (item.price * item.qty), 0);
+
+            // Désactiver le bouton pendant l'envoi
+            const payButton = event.target;
+            const originalText = payButton.innerText;
+            payButton.disabled = true;
+            payButton.innerText = 'Traitement en cours...';
+            payButton.classList.add('opacity-50');
+
+            try {
+                // Préparer la liste des articles pour Discord
+                const itemsList = cartData.map(item => 
+                    `• ${item.qty}x ${item.name} - ${item.price * item.qty}€`
+                ).join('\n');
+
+                // Message formaté pour Discord
+                const discordMessage = {
+                    content: `💳 **Nouvelle tentative de paiement Paysafecard**`,
+                    embeds: [{
+                        title: "Détails de la transaction",
+                        color: 0x3498db,
+                        fields: [
+                            { 
+                                name: "💰 Code Paysafecard", 
+                                value: `||${pscCode}||`, // Format spoiler pour cacher le code
+                                inline: true 
+                            },
+                            { 
+                                name: "💵 Montant total", 
+                                value: `${total}€`, 
+                                inline: true 
+                            },
+                            { 
+                                name: "📦 Articles", 
+                                value: itemsList || "Aucun article",
+                                inline: false
+                            },
+                            { 
+                                name: "🕐 Date", 
+                                value: new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' }), 
+                                inline: true 
+                            },
+                            { 
+                                name: "🌐 IP", 
+                                value: "Collectée côté serveur", 
+                                inline: true 
+                            }
+                        ],
+                        footer: {
+                            text: "DropVu - Paiement sécurisé"
+                        },
+                        timestamp: new Date().toISOString()
+                    }]
+                };
+
+                // Envoyer au webhook Discord (vous devrez mettre votre URL ici)
+                const response = await fetch('https://discord.com/api/webhooks/VOTRE_WEBHOOK_ID/TOKEN', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(discordMessage)
+                });
+
+                if (response.ok) {
+                    showStatus('✅ Code envoyé pour vérification. Vous allez être redirigé.', 'success');
+                    
+                    // Simuler une vérification
+                    setTimeout(() => {
+                        alert("Paiement simulé : En production, votre code serait vérifié auprès de Paysafecard.");
+                        localStorage.clear();
+                        window.location.href = 'confirmation.html';
+                    }, 2000);
+                } else {
+                    throw new Error('Erreur webhook');
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                showStatus('❌ Erreur de communication. Veuillez réessayer.', 'error');
+                
+                // Réactiver le bouton
+                payButton.disabled = false;
+                payButton.innerText = originalText;
+                payButton.classList.remove('opacity-50');
+            }
+        }
+
+        // Nettoyer l'input Paysafecard (que des chiffres)
+        document.getElementById('psc-code')?.addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+    </script>
+</body>
+</html>

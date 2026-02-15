@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>L'Essentiel Azur | DropVu</title>
+    <link rel="icon" href="https://i.imgur.com/991sWex.png" type="image/png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:wght@700&display=swap');
+        body { background: #000; font-family: 'Inter', sans-serif; color: white; margin: 0; }
+        .title-font { font-family: 'Playfair Display', serif; }
+        button, input { border-radius: 0 !important; }
+        
+        #video-bg { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+            z-index: -1; 
+            opacity: 0.4; 
+        }
+        
+        /* Overlay des nuages personnalisé - MÊME EFFET QUE SUR L'INDEX */
+        #intro-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            pointer-events: none;
+            display: flex;
+        }
+        
+        .intro-cloud {
+            width: 50%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            transition: transform 2s cubic-bezier(0.85, 0, 0.15, 1);
+        }
+        
+        .cloud-left {
+            background-image: url('nuage.png');
+            transform: translateX(0);
+        }
+        
+        .cloud-right {
+            background-image: url('nuage.png');
+            transform: translateX(0);
+        }
+        
+        /* Animation des nuages qui glissent */
+        .loaded .cloud-left {
+            transform: translateX(-100%);
+        }
+        
+        .loaded .cloud-right {
+            transform: translateX(100%);
+        }
+        
+        #cart-drawer { 
+    background: rgba(0, 68, 204, 0.4); /* Plus transparent (0.4 au lieu de 0.95) */
+    backdrop-filter: blur(12px); /* Correction de backdrop-blur: lg; en syntaxe standard */
+    -webkit-backdrop-filter: blur(12px); /* Support Safari */
+    color: white; 
+    transform: translateX(100%); 
+    transition: transform 0.4s ease; 
+    border-left: 1px solid rgba(255, 255, 255, 0.1); /* Optionnel : bordure subtile */
+        }
+        #cart-drawer.open { transform: translateX(0); }
+    </style>
+</head>
+<body class="pt-24">
+    <video autoplay muted loop id="video-bg"><source src="video.mp4" type="video/mp4"></video>
+
+    <!-- Overlay des nuages - IDENTIQUE À L'INDEX -->
+    <div id="intro-overlay">
+        <div class="intro-cloud cloud-left"></div>
+        <div class="intro-cloud cloud-right"></div>
+    </div>
+
+    <nav class="fixed top-0 w-full z-50 p-6 flex justify-between items-center px-12 text-white">
+        <a href="index.html" class="text-2xl font-bold title-font tracking-tighter">DROPVU</a>
+        <div class="flex items-center gap-6">
+            <button onclick="toggleCart()" class="relative p-2 border border-white/20 hover:bg-white hover:text-black transition">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                <span id="cart-count" class="absolute -top-2 -right-2 bg-white text-blue-900 text-[10px] w-5 h-5 flex items-center justify-center font-bold">0</span>
+            </button>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-16 pb-24 relative z-10">
+        <div class="bg-white/5 backdrop-blur-md p-2 border border-white/10">
+            <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=800" class="w-full">
+        </div>
+        <div class="space-y-8">
+            <h1 class="text-5xl title-font">L'Essentiel Azur</h1>
+            <p class="text-2xl font-bold text-blue-300">20,00€</p>
+            
+            <!-- Description détaillée du produit -->
+            <div class="space-y-4">
+                <p class="text-sm opacity-70 italic">Conçu pour capturer l'essence de l'horizon.</p>
+                <div class="border-l-4 border-blue-400 pl-4 py-2 bg-white/5">
+                    <p class="text-sm leading-relaxed">
+                        L'Essentiel Azur est bien plus qu'un simple accessoire. Fabriqué à la main avec des matériaux premium, 
+                        il incarne l'élégance minimaliste et la durabilité. Son design épuré s'adapte à toutes vos tenues, 
+                        du quotidien aux occasions spéciales. Chaque pièce est unique, avec des finitions soignées qui résistent au temps.
+                    </p>
+                    <ul class="text-sm opacity-80 mt-3 space-y-1 list-disc list-inside">
+                        <li>Matière : Cuir végétal certifié</li>
+                        <li>Dimensions : 12cm x 8cm x 2cm</li>
+                        <li>Poids léger : seulement 150g</li>
+                        <li>Garantie 2 ans</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-6">
+                <input id="qty" type="number" value="1" min="1" class="w-20 p-4 border border-white/10 bg-black/40 text-white outline-none">
+                <button onclick="addToCart(1, 'L\'Essentiel Azur', 20, 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=400')" class="flex-grow py-5 bg-white text-black text-xs font-bold uppercase tracking-widest hover:bg-blue-100 transition">Ajouter au panier</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Section Avis Clients -->
+    <section class="max-w-6xl mx-auto px-6 pb-24 relative z-10">
+        <h2 class="text-3xl title-font mb-8 text-center md:text-left">Ce que nos clients pensent</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            
+            <!-- Avis 1 -->
+            <div class="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-lg">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center text-xl font-bold">S</div>
+                    <div>
+                        <p class="font-semibold">Sophie Martin</p>
+                        <div class="flex text-yellow-400 text-sm">★★★★★</div>
+                    </div>
+                </div>
+                <p class="text-sm opacity-90">
+                    "Un produit magnifique ! La qualité est au rendez-vous et le rendu visuel est exactement comme sur la photo. 
+                    Je l'utilise tous les jours depuis un mois et il est toujours aussi impeccable. Je recommande vivement."
+                </p>
+                <p class="text-xs opacity-50 mt-3">Acheté le 12 janvier 2025</p>
+            </div>
+
+            <!-- Avis 2 -->
+            <div class="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-lg">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center text-xl font-bold">T</div>
+                    <div>
+                        <p class="font-semibold">Thomas Dubois</p>
+                        <div class="flex text-yellow-400 text-sm">★★★★☆</div>
+                    </div>
+                </div>
+                <p class="text-sm opacity-90">
+                    "Très satisfait de mon achat. Le design est sobre mais élégant, parfait pour un usage professionnel. 
+                    La matière est agréable au toucher. Petite étoile en moins car j'aurais aimé plus de choix de couleurs, 
+                    mais la qualité est là."
+                </p>
+                <p class="text-xs opacity-50 mt-3">Acheté le 5 février 2025</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Panier Partagé -->
+    <div id="cart-drawer" class="fixed top-0 right-0 h-full w-full md:w-[450px] z-[100] p-10 flex flex-col shadow-2xl">
+        <div class="flex justify-between items-center mb-12">
+            <h2 class="title-font text-3xl">Panier</h2>
+            <div class="flex gap-4 items-center">
+                <button onclick="clearCart()" class="text-[10px] uppercase tracking-widest text-red-200">Vider</button>
+                <button onclick="toggleCart()" class="text-[10px] uppercase tracking-widest border-b border-white/30 pb-1">Fermer</button>
+            </div>
+        </div>
+        <div id="cart-items" class="flex-grow overflow-y-auto space-y-8"></div>
+        <div class="mt-8 pt-8 border-t border-white/10">
+            <button onclick="window.location.href='paiement.html'" class="w-full py-5 bg-white text-blue-900 text-xs font-bold uppercase tracking-widest">Payer</button>
+        </div>
+    </div>
+
+    <script>
+        let cart = JSON.parse(localStorage.getItem('dropvu_cart')) || [];
+        
+        window.onload = function() {
+            // Déclencher l'animation des nuages après un court délai
+            setTimeout(() => document.body.classList.add('loaded'), 100);
+            updateCart();
+        };
+
+        function toggleCart() { document.getElementById('cart-drawer').classList.toggle('open'); }
+        
+        function clearCart() { cart = []; updateCart(); }
+
+        function addToCart(id, name, price, img) {
+            const qty = parseInt(document.getElementById('qty').value);
+            const item = cart.find(p => p.id === id);
+            if(item) item.qty += qty; else cart.push({id, name, price, img, qty});
+            updateCart();
+            toggleCart(); // Affiche le panier immédiatement
+        }
+
+        function updateCart() {
+            localStorage.setItem('dropvu_cart', JSON.stringify(cart));
+            const container = document.getElementById('cart-items');
+            container.innerHTML = '';
+            let count = 0;
+            cart.forEach((item, i) => {
+                count += item.qty;
+                container.innerHTML += `<div class="flex gap-6 items-center text-sm"><img src="${item.img}" class="w-16 h-20 object-cover"><span>${item.name} (${item.qty})</span></div>`;
+            });
+            document.getElementById('cart-count').innerText = count;
+        }
+    </script>
+</body>
+</html>
